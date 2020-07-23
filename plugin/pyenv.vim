@@ -2,7 +2,7 @@
 
 " g:pyenv_venv_name
 " g:pyenv_docker_image_name
-" g:pyenv_log
+" g:pyenv_show_log
 " g:pyenv_packages
 " g:pyenv_python_version
 
@@ -13,8 +13,6 @@ let s:packages = [
 \   'pyls-black',
 \   'pyls-isort',
 \]
-
-let s:docker_tmp_container_name = 'pyenv_tmp'
 
 let s:version_cmd = '%s -c "import platform; print(platform.python_version())"'
 let s:std_lib_path_cmd = '%s -c "import os; print(os.path.dirname(os.__file__))"'
@@ -29,8 +27,8 @@ let s:pyenv_venv_delete_cmd = 'pyenv virtualenv-delete -f %s'
 
 let s:docker_cp_cmd = 'docker cp %s:%s/. %s'
 let s:docker_run_cmd = 'docker run --rm %s %s'
-let s:docker_create_tmp_container_cmd = 'docker create --name=%s %s'
-let s:docker_rm_tmp_container_cmd = 'docker rm -f %s'
+let s:docker_create_container_cmd = 'docker create --name=%s %s'
+let s:docker_rm_container_cmd = 'docker rm -f %s'
 
 let s:pip_upgrade_cmd = '%s -m pip install --upgrade pip'
 let s:pip_install_cmd = '%s -m pip install --no-cache-dir %s'
@@ -50,12 +48,16 @@ func! s:trim(str)
 endfunc
 
 func! s:systemlist(command)
-    echom a:command
+    if s:get_option('pyenv_show_log', v:false)
+        echom a:command
+    endif
     return call('systemlist', [a:command])
 endfunc
 
 func! s:system(command)
-    echom a:command
+    if s:get_option('pyenv_show_log', v:false)
+        echom a:command
+    endif
     return s:trim(call('system', [a:command]))
 endfunc
 
@@ -168,30 +170,30 @@ func! s:get_venv_python_path(venv_path)
     return s:get_venv_bin_path(a:venv_path) . '/python'
 endfunc
 
-func! s:docker_create_tmp_container()
+func! s:docker_create_container(name)
     return s:system(
     \   printf(
-    \       s:docker_create_tmp_container_cmd,
-    \       s:docker_tmp_container_name,
+    \       s:docker_create_container_cmd,
+    \       a:name,
     \       g:pyenv_docker_image_name
     \   )
     \)
 endfunc
 
-func! s:docker_rm_tmp_container()
+func! s:docker_rm_container(name)
     return s:system(
     \   printf(
-    \       s:docker_rm_tmp_container_cmd,
-    \       s:docker_tmp_container_name
+    \       s:docker_rm_container_cmd,
+    \       a:name
     \   )
     \)
 endfunc
 
-func! s:docker_cp(source_path, dest_path)
+func! s:docker_cp(name, source_path, dest_path)
     return s:system(
     \   printf(
     \       s:docker_cp_cmd,
-    \       s:docker_tmp_container_name,
+    \       a:name,
     \       a:source_path,
     \       a:dest_path
     \   )
@@ -200,9 +202,10 @@ endfunc
 
 func! s:copy_docker_site_packages(site_packages_path)
     let l:docker_site_packages_path = s:get_docker_site_packages_path()
-    call s:docker_create_tmp_container()
-    call s:docker_cp(l:docker_site_packages_path, a:site_packages_path)
-    call s:docker_rm_tmp_container()
+    let l:container_name = g:pyenv_venv_name . '_pyenv'
+    call s:docker_create_container(l:container_name)
+    call s:docker_cp(l:container_name, l:docker_site_packages_path, a:site_packages_path)
+    call s:docker_rm_container(l:container_name)
 endfunc
 
 func! s:set_path(path)
@@ -264,6 +267,7 @@ func s:create_service_venv()
         return
     endif
     let l:venv_name = l:venv_name . '_service'
+    echo printf('Creating %s venv...', l:venv_name)
 
     let l:python_version = s:get_python_version()
     call s:pyenv_install_python(l:python_version)
@@ -275,6 +279,8 @@ func s:create_service_venv()
 
     call s:pip_upgrade(l:venv_path)
     call s:pip_install(l:venv_path, s:packages + s:get_option('pyenv_packages', []))
+    redraw
+    echo printf('Venv %s created successfully.', l:venv_name)
 endfunc
 
 func s:create_project_venv()
@@ -282,6 +288,7 @@ func s:create_project_venv()
     if empty(l:venv_name)
         return
     endif
+    echo printf('Creating %s venv...', l:venv_name)
 
     let l:python_version = s:get_python_version()
     call s:pyenv_install_python(l:python_version)
@@ -297,6 +304,8 @@ func s:create_project_venv()
     if !empty(s:get_option('pyenv_docker_image_name'))
         call s:copy_docker_site_packages(l:site_packages_path)
     endif
+    redraw
+    echo printf('Venv %s created successfully.', l:venv_name)
 endfunc
 
 func! s:init_project_env()
