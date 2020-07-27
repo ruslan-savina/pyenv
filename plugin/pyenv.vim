@@ -226,12 +226,6 @@ func! s:set_neomake_pylint(site_packages_path)
     \] + neomake#makers#ft#python#pylint().args
 endfunc
 
-func! s:set_virtual_env(path)
-    if stridx($VIRTUAL_ENV, a:path) < 0 && isdirectory(a:path)
-        let $VIRTUAL_ENV=a:path
-    endif
-endfunc
-
 func! s:generate_tags(paths)
     for l:path in a:paths
         call s:system(printf(s:generate_tags_cmd, l:path))
