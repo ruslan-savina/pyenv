@@ -189,11 +189,11 @@ func! s:docker_rm_container(name)
     \)
 endfunc
 
-func! s:docker_cp(name, source_path, dest_path)
+func! s:docker_cp(container_name, source_path, dest_path)
     return s:system(
     \   printf(
     \       s:docker_cp_cmd,
-    \       a:name,
+    \       a:container_name,
     \       a:source_path,
     \       a:dest_path
     \   )
@@ -339,6 +339,7 @@ func! s:init_service_env()
     call s:set_path(s:get_venv_bin_path(l:venv_path))
 endfunc
 
+command! PyenvDockerCp call s:copy_docker_site_packages(s:get_site_packages_path(s:get_venv_path(s:get_option('pyenv_venv_name'))))
 command! PyenvCreateServiceVenv call s:create_service_venv()
 command! PyenvCreateProjectVenv call s:create_project_venv()
 
