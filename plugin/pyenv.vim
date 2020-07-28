@@ -2,13 +2,13 @@ g:pyenv_venv_name = get(g:, 'pyenv_venv_name')
 if !g:pyenv_venv_name
     finish
 endif
-s:service_venv_name = g:pyenv_venv_name . '_service'
+let s:service_venv_name = g:pyenv_venv_name . '_service'
 
-g:pyenv_docker_image_name = get(g: 'pyenv_docker_image_name')
-g:pyenv_show_log = get(g: 'pyenv_show_log', 0)
-g:pyenv_python_version = get(g:, 'pyenv_python_version')
+let g:pyenv_docker_image_name = get(g: 'pyenv_docker_image_name')
+let g:pyenv_show_log = get(g: 'pyenv_show_log', 0)
+let g:pyenv_python_version = get(g:, 'pyenv_python_version')
 
-g:pyenv_packages = get(g: 'pyenv_packages', [])
+let g:pyenv_packages = get(g: 'pyenv_packages', [])
 let s:packages = [
 \   'flake8',
 \   'pylint',
