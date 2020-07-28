@@ -1,4 +1,4 @@
-g:pyenv_venv_name = get(g:, 'pyenv_venv_name')
+let g:pyenv_venv_name = get(g:, 'pyenv_venv_name')
 if !g:pyenv_venv_name
     finish
 endif
