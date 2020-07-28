@@ -1,14 +1,14 @@
 let g:pyenv_venv_name = get(g:, 'pyenv_venv_name')
-if !g:pyenv_venv_name
+if empty(g:pyenv_venv_name)
     finish
 endif
 let s:service_venv_name = g:pyenv_venv_name . '_service'
 
-let g:pyenv_docker_image_name = get(g: 'pyenv_docker_image_name')
-let g:pyenv_show_log = get(g: 'pyenv_show_log', 0)
+let g:pyenv_docker_image_name = get(g:, 'pyenv_docker_image_name')
+let g:pyenv_show_log = get(g:, 'pyenv_show_log', 0)
 let g:pyenv_python_version = get(g:, 'pyenv_python_version')
 
-let g:pyenv_packages = get(g: 'pyenv_packages', [])
+let g:pyenv_packages = get(g:, 'pyenv_packages', [])
 let s:packages = [
 \   'flake8',
 \   'pylint',
@@ -234,13 +234,13 @@ func! s:set_tags(paths)
 endfunc
 
 func! s:get_python_version()
-    if g:pyenv_python_version
-        return g:pyenv_python_version
-    else
-        if g:pyenv_docker_image_name
-            return s:get_docker_python_version()
-        else
+    if empty(g:pyenv_python_version)
+        if empty(g:pyenv_docker_image_name)
             return s:get_pyenv_python_version()
+        else
+            return s:get_docker_python_version()
+    else
+        return g:pyenv_python_version
     endif
 endfunc
 
@@ -281,7 +281,7 @@ func s:create_project_venv(name)
     let l:std_lib_path = s:get_std_lib_path(l:venv_path)
     call s:generate_tags([l:std_lib_path, l:site_packages_path])
 
-    if !empty(s:get_option('pyenv_docker_image_name'))
+    if !empty(g:pyenv_docker_image_name)
         call s:copy_docker_site_packages(l:site_packages_path)
     endif
     redraw
