@@ -1,18 +1,21 @@
-" Settings:
+g:pyenv_venv_name = get(g:, 'pyenv_venv_name')
+if !g:pyenv_venv_name
+    finish
+endif
+s:service_venv_name = g:pyenv_venv_name . '_service'
 
-" g:pyenv_venv_name
-" g:pyenv_docker_image_name
-" g:pyenv_show_log
-" g:pyenv_packages
-" g:pyenv_python_version
+g:pyenv_docker_image_name = get(g: 'pyenv_docker_image_name')
+g:pyenv_show_log = get(g: 'pyenv_show_log', 0)
+g:pyenv_python_version = get(g:, 'pyenv_python_version')
 
+g:pyenv_packages = get(g: 'pyenv_packages', [])
 let s:packages = [
 \   'flake8',
 \   'pylint',
 \   'python-language-server',
 \   'pyls-black',
 \   'pyls-isort',
-\]
+\] + g:pyenv_packages
 
 let s:version_cmd = '%s -c "import platform; print(platform.python_version())"'
 let s:std_lib_path_cmd = '%s -c "import os; print(os.path.dirname(os.__file__))"'
@@ -35,27 +38,19 @@ let s:pip_install_cmd = '%s -m pip install --no-cache-dir %s'
 
 let s:generate_tags_cmd = 'cd %s && ctags -R --languages=python --kinds-python=cf'
 
-func! s:get_option(key, ...)
-    if has_key(g:, a:key)
-        return get(g:, a:key)
-    else
-        return get(a:, 1, v:null)
-    endif
-endfunc
-
 func! s:trim(str)
     return substitute(a:str, '\n\+$', '', '')
 endfunc
 
 func! s:systemlist(command)
-    if s:get_option('pyenv_show_log', v:false)
+    if g:pyenv_show_log
         echom a:command
     endif
     return call('systemlist', [a:command])
 endfunc
 
 func! s:system(command)
-    if s:get_option('pyenv_show_log', v:false)
+    if g:pyenv_show_log
         echom a:command
     endif
     return s:trim(call('system', [a:command]))
@@ -154,7 +149,7 @@ func! s:pyenv_install(version)
     return s:system(printf(s:pyenv_install_cmd, a:version))
 endfunc
 
-func! s:get_pyenv_version()
+func! s:get_pyenv_python_version()
     return s:system(s:pyenv_version_cmd)
 endfunc
 
@@ -239,14 +234,14 @@ func! s:set_tags(paths)
 endfunc
 
 func! s:get_python_version()
-    let l:result = s:get_option('pyenv_python_version')
-    if empty(l:result) && !empty(s:get_option('pyenv_docker_image_name'))
-        let l:result = s:get_docker_python_version()
+    if g:pyenv_python_version
+        return g:pyenv_python_version
+    else
+        if g:pyenv_docker_image_name
+            return s:get_docker_python_version()
+        else
+            return s:get_pyenv_python_version()
     endif
-    if empty(l:result)
-        let l:result = s:get_pyenv_version()
-    endif
-    return l:result
 endfunc
 
 func! s:pyenv_install_python(version)
@@ -255,42 +250,33 @@ func! s:pyenv_install_python(version)
     endif
 endfunc
 
-func s:create_service_venv()
-    let l:venv_name = s:get_option('pyenv_venv_name')
-    if empty(l:venv_name)
-        return
-    endif
-    let l:venv_name = l:venv_name . '_service'
-    echo printf('Creating %s venv...', l:venv_name)
+func s:create_service_venv(name)
+    echo printf('Creating %s venv...', a:name)
 
     let l:python_version = s:get_python_version()
     call s:pyenv_install_python(l:python_version)
 
-    call s:pyenv_venv_delete(l:venv_name)
-    call s:pyenv_venv_create(l:python_version, l:venv_name)
+    call s:pyenv_venv_delete(a:name)
+    call s:pyenv_venv_create(l:python_version, a:name)
 
-    let l:venv_path = s:get_venv_path(l:venv_name)
+    let l:venv_path = s:get_venv_path(a:name)
 
     call s:pip_upgrade(l:venv_path)
-    call s:pip_install(l:venv_path, s:packages + s:get_option('pyenv_packages', []))
+    call s:pip_install(l:venv_path, s:packages)
     redraw
-    echo printf('Venv %s created successfully.', l:venv_name)
+    echo printf('Venv %s created successfully.', a:name)
 endfunc
 
-func s:create_project_venv()
-    let l:venv_name = s:get_option('pyenv_venv_name')
-    if empty(l:venv_name)
-        return
-    endif
-    echo printf('Creating %s venv...', l:venv_name)
+func s:create_project_venv(name)
+    echo printf('Creating %s venv...', a:name)
 
     let l:python_version = s:get_python_version()
     call s:pyenv_install_python(l:python_version)
 
-    call s:pyenv_venv_delete(l:venv_name)
-    call s:pyenv_venv_create(l:python_version, l:venv_name)
+    call s:pyenv_venv_delete(a:name)
+    call s:pyenv_venv_create(l:python_version, a:name)
 
-    let l:venv_path = s:get_venv_path(l:venv_name)
+    let l:venv_path = s:get_venv_path(a:name)
     let l:site_packages_path = s:get_site_packages_path(l:venv_path)
     let l:std_lib_path = s:get_std_lib_path(l:venv_path)
     call s:generate_tags([l:std_lib_path, l:site_packages_path])
@@ -299,16 +285,11 @@ func s:create_project_venv()
         call s:copy_docker_site_packages(l:site_packages_path)
     endif
     redraw
-    echo printf('Venv %s created successfully.', l:venv_name)
+    echo printf('Venv %s created successfully.', a:name)
 endfunc
 
-func! s:init_project_env()
-    let l:venv_name = s:get_option('pyenv_venv_name')
-    if empty(l:venv_name)
-        return
-    endif
-
-    let l:venv_path = s:get_venv_path(l:venv_name)
+func! s:init_project_env(name)
+    let l:venv_path = s:get_venv_path(a:name)
     if !isdirectory(l:venv_path)
         return
     endif
@@ -320,22 +301,16 @@ func! s:init_project_env()
     call s:set_tags([l:std_lib_path, l:site_packages_path])
 endfunc
 
-func! s:init_service_env()
-    let l:venv_name = s:get_option('pyenv_venv_name')
-    if empty(l:venv_name)
-        return
-    endif
-    let l:venv_name = l:venv_name . '_service'
-    let l:venv_path = s:get_venv_path(l:venv_name)
+func! s:init_service_env(name)
+    let l:venv_path = s:get_venv_path(a:name)
     if !isdirectory(l:venv_path)
         return
     endif
     call s:set_path(s:get_venv_bin_path(l:venv_path))
 endfunc
 
-command! PyenvDockerCp call s:copy_docker_site_packages(s:get_site_packages_path(s:get_venv_path(s:get_option('pyenv_venv_name'))))
-command! PyenvCreateServiceVenv call s:create_service_venv()
-command! PyenvCreateProjectVenv call s:create_project_venv()
+command! PyenvCreateServiceVenv call s:create_service_venv(s:service_venv_name)
+command! PyenvCreateProjectVenv call s:create_project_venv(g:pyenv_venv_name)
 
-call s:init_service_env()
-autocmd VimEnter * call s:init_project_env()
+call s:init_service_env(s:service_venv_name)
+autocmd VimEnter * call s:init_project_env(g:pyenv_venv_name)
