@@ -7,8 +7,9 @@ let s:service_venv_name = g:pyenv_venv_name . '_service'
 let g:pyenv_docker_image_name = get(g:, 'pyenv_docker_image_name')
 let g:pyenv_show_log = get(g:, 'pyenv_show_log', 0)
 let g:pyenv_python_version = get(g:, 'pyenv_python_version')
-
 let g:pyenv_packages = get(g:, 'pyenv_packages', [])
+let g:pyenv_django_settings = get(g:, 'pyenv_django_settings')
+
 let s:packages = [
 \   'flake8',
 \   'pylint',
@@ -217,8 +218,16 @@ func! s:set_neomake_pylint(site_packages_path)
     let g:neomake_python_pylint_exe = 'env'
     let g:neomake_python_pylint_args = [
     \   printf('PYTHONPATH=%s', a:site_packages_path),
-    \   'pylint'
-    \] + neomake#makers#ft#python#pylint().args
+    \]
+    if !empty(g:pyenv_django_settings)
+        call add(
+        \   g:neomake_python_pylint_args,
+        \   printf('DJANGO_SETTINGS_MODULE=%s', g:pyenv_django_settings)
+        \)
+    endif
+    call add(g:neomake_python_pylint_args, 'pylint')
+    let g:neomake_python_pylint_args = g:neomake_python_pylint_args + neomake#makers#ft#python#pylint().args
+    echom g:neomake_python_pylint_args
 endfunc
 
 func! s:generate_tags(paths)
