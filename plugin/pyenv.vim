@@ -227,7 +227,6 @@ func! s:set_neomake_pylint(site_packages_path)
     endif
     call add(g:neomake_python_pylint_args, 'pylint')
     let g:neomake_python_pylint_args = g:neomake_python_pylint_args + neomake#makers#ft#python#pylint().args
-    echom g:neomake_python_pylint_args
 endfunc
 
 func! s:generate_tags(paths)
