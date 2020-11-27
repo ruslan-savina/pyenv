@@ -286,12 +286,13 @@ func s:create_project_venv(name)
 
     let l:venv_path = s:get_venv_path(a:name)
     let l:site_packages_path = s:get_site_packages_path(l:venv_path)
-    let l:std_lib_path = s:get_std_lib_path(l:venv_path)
-    call s:generate_tags([l:std_lib_path, l:site_packages_path])
-
     if !empty(g:pyenv_docker_image_name)
         call s:copy_docker_site_packages(l:site_packages_path)
     endif
+
+    let l:std_lib_path = s:get_std_lib_path(l:venv_path)
+    call s:generate_tags([l:std_lib_path, l:site_packages_path])
+
     redraw
     echo printf('Venv %s created successfully.', a:name)
 endfunc
