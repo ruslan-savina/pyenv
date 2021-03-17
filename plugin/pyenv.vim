@@ -1,3 +1,10 @@
+" let g:pyenv_python_version = '3.7.7'
+" let g:pyenv_django_settings = s:django_settings
+" let g:pyenv_show_log = 0
+" let g:pyenv_venv_name = 'braavo'
+" let g:pyenv_packages = ['pylint-django']
+" let g:pyenv_docker_image_name = 'aprenita-infrastructure_backend'
+
 let g:pyenv_venv_name = get(g:, 'pyenv_venv_name')
 if empty(g:pyenv_venv_name)
     finish
