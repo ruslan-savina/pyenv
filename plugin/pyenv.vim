@@ -20,7 +20,7 @@ let g:pyenv_django_settings = get(g:, 'pyenv_django_settings')
 let s:packages = [
 \   'flake8',
 \   'pylint',
-\   'python-language-server',
+\   'python-lsp-server',
 \   'pyls-black',
 \   'pyls-isort',
 \] + g:pyenv_packages
