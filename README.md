@@ -14,3 +14,13 @@ pipx inject pylint pylint-venv
 
 configure pilntrc:
 https://github.com/jgosmann/pylint-venv
+
+# new 
+sudo pacman -S pyenv
+sudo pacman -S python-pipx
+pyenv install PYTHON_VERSION
+~/.pyenv/versions/PYTHON_VERSION/bin/python -m venv ~/.pyenv/versions/PYTHON_VERSION/envs/ENV_NAME
+export PIPX_DEFAULT_PYTHON=~/.pyenv/versions/PYTHON_VERSION/bin/python
+pipx install poetry
+source ~/.pyenv/versions/PYTHON_VERSION/envs/ENV_NAME/bin/activate
+poetry install --no-root
