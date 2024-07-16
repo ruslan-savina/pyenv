@@ -30,3 +30,7 @@ pipx install poetry
 source ~/.pyenv/versions/PYTHON_VERSION/envs/ENV_NAME/bin/activate
 
 poetry install --no-root
+
+# poetry
+pipx install poetry==1.5.2 --suffix '@1.5.2'
+poetry@1.5.2 install
