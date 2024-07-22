@@ -21,6 +21,7 @@ sudo pacman -S pyenv
 sudo pacman -S python-pipx
 
 pyenv install PYTHON_VERSION
+
 ~/.pyenv/versions/PYTHON_VERSION/bin/python -m venv ~/.pyenv/versions/PYTHON_VERSION/envs/ENV_NAME
 
 export PIPX_DEFAULT_PYTHON=~/.pyenv/versions/PYTHON_VERSION/bin/python
